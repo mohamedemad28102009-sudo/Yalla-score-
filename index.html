@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>كورة لايف - بيانات مباشرة حقيقية</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        :root { --primary: #0a0a1a; --secondary: #12122b; --accent: #e94560; --green: #00d26a; --yellow: #ffc107; --text: #fff; --muted: #8892b0; --card: #1a1a2e; --border: #2d2d44; --ahly: #e31b23; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--primary); color: var(--text); min-height: 100vh; padding-bottom: 80px; }
+
+        .header { background: var(--secondary); padding: 12px 15px; position: fixed; top: 0; width: 100%; z-index: 1000; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 20px rgba(0,0,0,0.3); }
+        .logo { display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 800; color: var(--accent); }
+        .logo i { font-size: 24px; }
+        .header-actions { display: flex; gap: 8px; }
+        .header-btn { background: none; border: none; color: var(--text); font-size: 18px; cursor: pointer; padding: 8px; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .header-btn:active { background: rgba(233,69,96,0.3); transform: scale(0.95); }
+
+        .api-status { position: fixed; top: 64px; right: 10px; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; z-index: 999; background: var(--card); border: 1px solid var(--border); color: var(--muted); }
+        .api-status.online { background: rgba(0,210,106,0.15); color: var(--green); border-color: var(--green); }
+        .api-status.offline { background: rgba(233,69,96,0.15); color: var(--accent); border-color: var(--accent); }
+
+        .main-container { margin-top: 60px; padding-bottom: 20px; }
+
+        .league-tabs { display: flex; overflow-x: auto; scrollbar-width: none; padding: 10px; gap: 8px; background: var(--secondary); border-bottom: 1px solid var(--border); position: sticky; top: 60px; z-index: 998; }
+        .league-tabs::-webkit-scrollbar { display: none; }
+        .league-tab { padding: 8px 16px; white-space: nowrap; cursor: pointer; border-radius: 20px; background: var(--card); border: 1px solid var(--border); color: var(--muted); font-weight: 600; font-size: 13px; transition: all 0.3s; font-family: inherit; display: flex; align-items: center; gap: 6px; }
+        .league-tab.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 4px 15px rgba(233,69,96,0.3); }
+        .league-tab.ahly-tab { background: rgba(227,27,35,0.15); border-color: var(--ahly); color: var(--ahly); }
+        .league-tab.ahly-tab.active { background: var(--ahly); color: white; }
+        .league-tab .live-dot { width: 8px; height: 8px; background: #ff4757; border-radius: 50%; animation: pulse 2s infinite; display: none; }
+        .league-tab .live-dot.show { display: inline-block; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        .section-title { padding: 15px; font-size: 16px; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+        .section-title.ahly { color: var(--ahly); }
+
+        .date-bar { display: flex; overflow-x: auto; scrollbar-width: none; padding: 10px 15px; gap: 8px; background: rgba(18,18,43,0.8); backdrop-filter: blur(10px); position: sticky; top: 108px; z-index: 997; border-bottom: 1px solid var(--border); }
+        .date-bar::-webkit-scrollbar { display: none; }
+        .date-pill { padding: 8px 14px; border-radius: 12px; background: var(--card); border: 1px solid var(--border); color: var(--muted); font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.3s; font-family: inherit; min-width: 70px; text-align: center; }
+        .date-pill.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .date-pill .d-name { font-size: 11px; opacity: 0.8; display: block; }
+        .date-pill .d-num { font-size: 16px; font-weight: 800; display: block; }
+
+        .match-card { background: var(--card); margin: 8px 15px; border-radius: 14px; padding: 16px; border: 1px solid var(--border); cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden; }
+        .match-card:hover { border-color: var(--accent); }
+        .match-card.live { border-left: 3px solid var(--accent); }
+        .match-card.ahly-match { border-right: 3px solid var(--ahly); }
+        .match-card:active { transform: scale(0.98); background: #22223f; }
+        .match-card.favorite::after { content: '♥'; position: absolute; top: 8px; left: 8px; color: #ff4757; font-size: 16px; }
+        .match-league { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; font-size: 11px; color: var(--muted); font-weight: 600; }
+        .match-league img { width: 18px; height: 18px; object-fit: contain; }
+        .match-teams { display: flex; align-items: center; justify-content: space-between; }
+        .match-team { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; }
+        .match-team .t-logo { width: 48px; height: 48px; border-radius: 50%; background: var(--secondary); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: var(--accent); border: 2px solid var(--border); overflow: hidden; }
+        .match-team .t-logo img { width: 100%; height: 100%; object-fit: cover; }
+        .match-team .t-name { font-size: 13px; font-weight: 700; text-align: center; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .match-center { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 90px; }
+        .match-score { font-size: 28px; font-weight: 800; letter-spacing: 2px; font-family: 'Courier New', monospace; }
+        .match-time { font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; background: var(--secondary); }
+        .match-time.live { background: rgba(255,71,87,0.2); color: #ff4757; animation: pulse 2s infinite; }
+        .match-time.finished { background: rgba(0,210,106,0.2); color: var(--green); }
+        .match-time.upcoming { color: var(--yellow); }
+        .match-status { font-size: 10px; color: var(--muted); margin-top: 2px; }
+        .match-channel { display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 10px; font-size: 11px; color: var(--muted); }
+
+        .standings-table { width: calc(100% - 30px); border-collapse: collapse; margin: 10px 15px; }
+        .standings-table th, .standings-table td { padding: 10px 4px; text-align: center; border-bottom: 1px solid var(--border); font-size: 12px; }
+        .standings-table th { color: var(--muted); font-weight: 600; background: var(--secondary); }
+        .standings-table td { color: var(--text); }
+        .standings-table .team-cell { display: flex; align-items: center; gap: 8px; text-align: right; }
+        .standings-table .t-logo-sm { width: 24px; height: 24px; border-radius: 50%; background: var(--secondary); display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--accent); flex-shrink: 0; overflow: hidden; }
+        .standings-table .t-logo-sm img { width: 100%; height: 100%; object-fit: cover; }
+        .standings-table .pos { font-weight: 700; width: 28px; }
+        .standings-table .pts { font-weight: 800; color: var(--accent); }
+        .standings-table tr.top td { background: rgba(0,210,106,0.05); }
+        .standings-table tr.relegation td { background: rgba(233,69,96,0.05); }
+
+        .news-card { background: var(--card); margin: 8px 15px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); cursor: pointer; transition: all 0.3s; }
+        .news-card:active { transform: scale(0.98); }
+        .news-img { width: 100%; height: 160px; background: var(--secondary); display: flex; align-items: center; justify-content: center; font-size: 40px; color: var(--muted); }
+        .news-body { padding: 14px; }
+        .news-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; line-height: 1.4; }
+        .news-meta { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 11px; }
+
+        .skeleton { background: linear-gradient(90deg, var(--card) 25%, var(--secondary) 50%, var(--card) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 12px; height: 100px; margin: 8px 15px; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        .empty-state { text-align: center; padding: 50px 20px; color: var(--muted); }
+        .empty-state i { font-size: 48px; margin-bottom: 15px; display: block; opacity: 0.5; }
+        .empty-state p { font-size: 15px; margin-bottom: 8px; }
+        .empty-state span { font-size: 13px; }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--secondary); display: flex; justify-content: space-around; padding: 8px 0 12px; border-top: 1px solid var(--border); z-index: 1000; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--muted); font-size: 10px; transition: all 0.3s; padding: 6px 16px; border-radius: 10px; cursor: pointer; background: none; border: none; font-family: inherit; min-width: 60px; }
+        .nav-item.active { color: var(--accent); }
+        .nav-item:active { background: rgba(233,69,96,0.1); transform: scale(0.95); }
+        .nav-item i { font-size: 20px; }
+
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: none; opacity: 0; transition: opacity 0.3s; align-items: flex-end; justify-content: center; }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        .modal-content { background: var(--primary); width: 100%; max-height: 90vh; border-radius: 20px 20px 0 0; overflow-y: auto; transform: translateY(100%); transition: transform 0.3s; }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+        .modal-header { padding: 18px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--primary); z-index: 10; }
+        .modal-close { background: none; border: none; color: var(--text); font-size: 22px; cursor: pointer; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+        .modal-close:active { background: rgba(255,255,255,0.1); }
+
+        .detail-scoreboard { padding: 25px 20px; text-align: center; background: var(--secondary); }
+        .detail-teams { display: flex; justify-content: space-around; align-items: center; margin-bottom: 15px; }
+        .detail-team { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; }
+        .detail-team .t-logo { width: 56px; height: 56px; font-size: 22px; }
+        .detail-team span { font-size: 13px; font-weight: 600; text-align: center; }
+        .detail-score { font-size: 36px; font-weight: 800; }
+        .detail-time { font-size: 13px; color: var(--muted); margin-top: 5px; }
+
+        .events-list { padding: 15px 20px; }
+        .event-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .event-time { font-weight: 700; color: var(--accent); min-width: 36px; font-size: 13px; }
+        .event-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+        .event-icon.goal { background: rgba(0,210,106,0.2); color: var(--green); }
+        .event-icon.card { background: rgba(255,193,7,0.2); color: var(--yellow); }
+        .event-icon.red { background: rgba(233,69,96,0.2); color: var(--accent); }
+        .event-icon.sub { background: rgba(52,152,219,0.2); color: #3498db; }
+        .event-player { flex: 1; font-size: 13px; }
+        .event-team { font-size: 11px; color: var(--muted); }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; padding: 15px 20px; }
+        .stats-val { font-weight: 700; font-size: 13px; text-align: center; }
+        .stats-bar { display: flex; align-items: center; gap: 6px; }
+        .stats-track { flex: 1; height: 5px; background: var(--secondary); border-radius: 3px; overflow: hidden; }
+        .stats-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+        .stats-label { font-size: 11px; color: var(--muted); text-align: center; grid-column: 1 / -1; margin-top: -2px; margin-bottom: 6px; }
+
+        .stream-placeholder { padding: 20px; text-align: center; background: var(--secondary); margin: 15px; border-radius: 12px; border: 1px dashed var(--border); }
+        .stream-placeholder i { font-size: 32px; color: var(--accent); margin-bottom: 10px; }
+        .stream-placeholder p { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+        .stream-btn { display: inline-block; padding: 8px 20px; background: var(--accent); color: white; border: none; border-radius: 20px; font-weight: 600; font-size: 13px; cursor: pointer; text-decoration: none; }
+
+        .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--accent); color: white; padding: 10px 20px; border-radius: 25px; font-weight: 600; font-size: 13px; z-index: 10000; opacity: 0; transition: all 0.4s; display: flex; align-items: center; gap: 8px; pointer-events: none; }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        .refresh-btn { position: fixed; bottom: 90px; left: 15px; width: 48px; height: 48px; border-radius: 50%; background: var(--accent); color: white; border: none; font-size: 20px; cursor: pointer; z-index: 999; box-shadow: 0 4px 15px rgba(233,69,96,0.4); display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+        .refresh-btn:active { transform: scale(0.9); }
+        .refresh-btn.spinning { animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .ahly-hero { background: linear-gradient(135deg, #e31b23 0%, #8b0000 100%); margin: 15px; border-radius: 16px; padding: 20px; text-align: center; position: relative; overflow: hidden; }
+        .ahly-hero::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); }
+        .ahly-hero h2 { font-size: 22px; margin-bottom: 8px; position: relative; }
+        .ahly-hero p { font-size: 13px; opacity: 0.9; position: relative; }
+        .ahly-hero .ahly-badge { font-size: 48px; margin-bottom: 10px; }
+
+        .search-box { padding: 15px; background: var(--secondary); border-bottom: 1px solid var(--border); position: sticky; top: 108px; z-index: 997; }
+        .search-input { width: 100%; padding: 10px 15px; border-radius: 20px; background: var(--card); border: 1px solid var(--border); color: var(--text); font-size: 14px; font-family: inherit; }
+        .search-input::placeholder { color: var(--muted); }
+        .search-results { padding: 15px; }
+        .search-result-item { background: var(--card); padding: 12px; border-radius: 10px; margin-bottom: 8px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; }
+        .search-result-item:hover { border-color: var(--accent); }
+
+        .favorites-view { display: none; }
+        .favorites-view.active { display: block; }
+
+        @media (min-width: 768px) { 
+            .match-card, .skeleton, .news-card, .standings-table { max-width: 700px; margin-left: auto; margin-right: auto; } 
+            .league-tabs, .date-bar { max-width: 700px; margin: 0 auto; } 
+        }
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="logo"><i class="fas fa-futbol"></i><span>كورة لايف</span></div>
+        <div class="header-actions">
+            <button class="header-btn" onclick="App.toggleSearch()" title="بحث"><i class="fas fa-search"></i></button>
+            <button class="header-btn" onclick="App.refreshData()" title="تحديث"><i class="fas fa-sync-alt"></i></button>
+            <button class="header-btn" onclick="App.toggleSettings()" title="إعدادات"><i class="fas fa-cog"></i></button>
+        </div>
+    </header>
+
+    <div class="api-status" id="apiStatus">جاري الاتصال...</div>
+
+    <div id="searchBox" class="search-box" style="display:none;">
+        <input type="text" class="search-input" id="searchInput" placeholder="ابحث عن مباراة أو فريق..." onkeyup="App.search()">
+        <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <div class="main-container" id="mainContainer">
+        <!-- المحتوى يُملأ بالجافاسكريبت -->
+    </div>
+
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-view="matches" onclick="App.switchView('matches')">
+            <i class="fas fa-futbol"></i><span>المباريات</span>
+        </button>
+        <button class="nav-item" data-view="standings" onclick="App.switchView('standings')">
+            <i class="fas fa-table"></i><span>الترتيب</span>
+        </button>
+        <button class="nav-item" data-view="favorites" onclick="App.switchView('favorites')">
+            <i class="fas fa-heart"></i><span>المفضلة</span>
+        </button>
+        <button class="nav-item" data-view="ahly" onclick="App.switchView('ahly')">
+            <i class="fas fa-heart" style="color:#e31b23"></i><span>الأهلي</span>
+        </button>
+        <button class="nav-item" data-view="news" onclick="App.switchView('news')">
+            <i class="fas fa-newspaper"></i><span>الأخبار</span>
+        </button>
+    </nav>
+
+    <div class="modal-overlay" id="matchModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">تفاصيل المباراة</h3>
+                <button class="modal-close" onclick="App.closeModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <button class="refresh-btn" onclick="App.refreshData()" title="تحديث"><i class="fas fa-sync-alt"></i></button>
+    <div class="toast" id="toast"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
